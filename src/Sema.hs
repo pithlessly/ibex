@@ -1,6 +1,3 @@
-{-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE LambdaCase #-}
-
 module Sema (sema) where
 
 
@@ -32,10 +29,10 @@ walkFns = go 0 Map.empty where
       if name `Map.member` bindings then
         Left $ "duplicate definitions of symbol '" ++ Text.unpack name ++ "'"
       else do
-      let bindings' = Map.insert name idx bindings
-      f' <- walkFn bindings' f
-      fs' <- go (idx + 1) bindings' fs
-      return $ f':fs'
+        let bindings' = Map.insert name idx bindings
+        f' <- walkFn bindings' f
+        fs' <- go (idx + 1) bindings' fs
+        return $ f':fs'
 
 walkFn :: Map.Map Text Int -> Ast.Function -> Walk Ir.Function
 walkFn bindings f = do

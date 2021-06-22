@@ -1,6 +1,3 @@
-{-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE OverloadedStrings, LambdaCase #-}
-
 module Codegen (codegen) where
 
 

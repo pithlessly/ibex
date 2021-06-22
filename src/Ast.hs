@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wall #-}
-
 module Ast (Program (..), Function (..), Statement (..)) where
 
 

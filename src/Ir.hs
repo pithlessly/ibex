@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wall #-}
-
 module Ir (Program (..), Function (..), Statement (..)) where
 
 

@@ -1,6 +1,3 @@
-{-# OPTIONS_GHC -Wall #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module Parse (parse) where
 
 
