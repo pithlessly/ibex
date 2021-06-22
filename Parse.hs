@@ -17,9 +17,8 @@ import qualified Text.Parsec as Parsec
 parse :: Text -> Either String Program
 parse t =
   case
-    let initState = () in
     let filename = "" in
-    Parsec.runParser (spaces *> program <* Parsec.eof) initState filename t
+    Parsec.parse (spaces *> program <* Parsec.eof) filename t
   of
     Left e -> Left $ show e
     Right pgm -> Right pgm
