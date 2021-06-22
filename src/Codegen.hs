@@ -13,31 +13,40 @@ import qualified Control.Monad.RWS.Strict as RWS
 
 
 codegen :: Program -> Text
-codegen pgm = Text.concat $ reverse $ fst $ RWS.execRWS (emitProgram pgm) () []
+codegen pgm = render $ snd $ RWS.execRWS (emitProgram pgm) () []
 
--- The code generation monad, relying on context data `ctx`. There is no written data;
--- instead text fragments are accumulated in the state as a list in reverse order for
--- better performance.
-type Codegen ctx = RWS.RWS ctx () [Text]
+data Emitter = ELeaf Text | EBranch Emitter Emitter
+
+render :: Emitter -> Text
+render = Text.concat . go [] where
+  go acc (ELeaf t) = t : acc
+  go acc (EBranch e1 e2) = go (go acc e2) e1
+
+instance Semigroup Emitter where (<>) = EBranch
+instance Monoid    Emitter where mempty = ELeaf ""
+
+-- The code generation monad, relying on context data `ctx` and mutating state data `st`.
+-- Generated fragments are accumulated in the writer as a difference list.
+type Codegen ctx st = RWS.RWS ctx Emitter st
 
 -- like `RWS.local`, but allows the function to modify the context type
-localCtx :: (y -> x) -> Codegen x a -> Codegen y a
+localCtx :: (cty -> ctx) -> Codegen ctx st a -> Codegen cty st a
 localCtx f x = RWS.rws $ RWS.runRWS x . f
 
-emit :: Text -> Codegen ctx ()
-emit t = RWS.modify (t :)
+emit :: Text -> Codegen ctx st ()
+emit t = RWS.tell $ ELeaf t
 
-emits :: [Text] -> Codegen ctx ()
-emits ts = RWS.modify (reverse ts ++)
+emits :: [Text] -> Codegen ctx st ()
+emits = mapM_ emit
 
-emitProgram :: Program -> Codegen ctx ()
+emitProgram :: Program -> Codegen ctx st ()
 emitProgram pgm =
   let fns = _functions pgm in
   RWS.forM_ fns (localCtx (const fns) . emitFunction)
 
 type FnsCtx = Vector Function
 
-emitFunction :: Function -> Codegen FnsCtx ()
+emitFunction :: Function -> Codegen FnsCtx st ()
 emitFunction f = do
   let name = convertName $ _name f
   -- all functions are public by default; B has no equivalent of C's 'static' keyword.
@@ -47,7 +56,7 @@ emitFunction f = do
   mapM_ emitStatement $ _body f
   emit "  ret\n\n"
 
-emitStatement :: Statement -> Codegen FnsCtx ()
+emitStatement :: Statement -> Codegen FnsCtx st ()
 emitStatement = \case
   SCall idx -> do
     fns <- RWS.ask
