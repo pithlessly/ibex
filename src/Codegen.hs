@@ -6,6 +6,9 @@ import Ir (Program (..), Function (..), Statement (..))
 import Data.Text (Text)
 import qualified Data.Text as Text
 
+import Data.Vector (Vector)
+import qualified Data.Vector as Vector
+
 import qualified Control.Monad.RWS.Strict as RWS
 
 
@@ -32,7 +35,7 @@ emitProgram pgm =
   let fns = _functions pgm in
   RWS.forM_ fns (localCtx (const fns) . emitFunction)
 
-type FnsCtx = [Function]
+type FnsCtx = Vector Function
 
 emitFunction :: Function -> Codegen FnsCtx ()
 emitFunction f = do
@@ -48,7 +51,7 @@ emitStatement :: Statement -> Codegen FnsCtx ()
 emitStatement = \case
   SCall idx -> do
     fns <- RWS.ask
-    let f = fns !! idx
+    let f = fns Vector.! idx
     emits ["  call ", _name f, "\n"]
 
 -- If the name starts with a dot or an underscore, prepend an underscore to it.

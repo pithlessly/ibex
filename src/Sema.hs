@@ -9,6 +9,8 @@ import qualified Data.Text as Text
 
 import qualified Data.Map as Map
 
+import qualified Data.Vector as Vector
+
 
 sema :: Ast.Program -> Either String Ir.Program
 sema = walkPgm
@@ -18,14 +20,14 @@ type Walk = Either String
 walkPgm :: Ast.Program -> Walk Ir.Program
 walkPgm Ast.Program { Ast._functions = fs } = do
   fs' <- walkFns fs
-  return Ir.Program { Ir._functions = fs' }
+  return Ir.Program { Ir._functions = Vector.fromList fs' }
 
 walkFns :: [Ast.Function] -> Walk [Ir.Function]
 walkFns = go 0 Map.empty where
   go idx bindings = \case
     [] -> Right []
-    f:fs -> do
-      let name = Ast._name f
+    f:fs ->
+      let name = Ast._name f in
       if name `Map.member` bindings then
         Left $ "duplicate definitions of symbol '" ++ Text.unpack name ++ "'"
       else do
@@ -40,7 +42,7 @@ walkFn bindings f = do
   return Ir.Function {
     Ir._name    = Ast._name f,
     Ir._numArgs = length $ Ast._args f,
-    Ir._body    = body'
+    Ir._body    = Vector.fromList body'
   }
 
 walkStatement :: Map.Map Text Int -> Ast.Statement -> Walk Ir.Statement
