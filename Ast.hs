@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wall #-}
 
-module Ast (Program (..), Function (..)) where
+module Ast (Program (..), Function (..), Statement (..)) where
 
 
 import Data.Text (Text)
@@ -12,5 +12,8 @@ data Program = Program {
 
 data Function = Function {
   _name :: Text,
-  _args :: [Text]
+  _args :: [Text],
+  _body :: [Statement]
 } deriving (Show)
+
+data Statement = SCall Text deriving (Show)

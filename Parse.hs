@@ -4,7 +4,7 @@
 module Parse (parse) where
 
 
-import Ast (Program (..), Function (..))
+import Ast (Program (..), Function (..), Statement (..))
 
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -38,8 +38,11 @@ function = do
   token "("
   args <- ident `Parsec.sepEndBy` token "," -- allow a trailing comma in parameter lists
   token ")"
-  token ";"
-  return Function { _name = name, _args = args }
+  -- TODO: allow single-statement functions to be defined without braces
+  token "{"
+  body <- many statement
+  token "}"
+  return Function { _name = name, _args = args, _body = body }
 
 -- expect the string `s` followed by spaces
 token :: String -> Parser a ()
@@ -56,3 +59,12 @@ ident =
       then Parsec.unexpected $ "keyword " ++ c:cs
       else return i
   ) <?> "identifier"
+
+-- parse a statement
+statement :: Parser a Statement
+statement =
+  do
+    name <- ident
+    mapM_ token ["(", ")", ";"]
+    return $ SCall name
+  <?> "statement"
