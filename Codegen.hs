@@ -20,11 +20,24 @@ type Codegen = State.State [Text]
 emit :: Text -> Codegen ()
 emit t = State.modify (t :)
 
+emits :: [Text] -> Codegen ()
+emits ts = State.modify (reverse ts ++)
+
 emitProgram :: Program -> Codegen ()
 emitProgram pgm =
   mapM_ emitFunction $ _functions pgm
 
 emitFunction :: Function -> Codegen ()
 emitFunction f = do
-  emit (_name f)
-  emit ":\n  ret\n"
+  let name = convertName $ _name f
+  -- all functions are public by default; B has no equivalent of C's 'static' keyword.
+  -- maybe we should add it?
+  emits ["global ", name, "\n"]
+  emits [name, ":\n"]
+  emit "  ret\n\n"
+
+-- If the name starts with a dot or an underscore, prepend an underscore to it.
+convertName :: Text -> Text
+convertName name
+  | Text.head name `elem` ['.', '_'] = Text.cons '_' name
+  | otherwise = name

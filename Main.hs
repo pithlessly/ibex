@@ -20,7 +20,7 @@ compile s =
       case Sema.sema ast of
         Left msg -> err "semantic analysis" msg
         Right ir ->
-          putStrLn $ Text.unpack $ Codegen.codegen ir
+          putStr $ Text.unpack $ Codegen.codegen ir
   where
     err src msg =
       let formatted =
