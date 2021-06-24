@@ -1,12 +1,12 @@
 module Parse (parse) where
 
 
-import Ast (Program (..), Function (..), Statement (..))
+import Ast (Program (..), Function (..), Statement (..), Expr (..))
 
 import Data.Text (Text)
 import qualified Data.Text as Text
 
-import Text.Parsec (char, many, spaces, try, (<?>), (<|>))
+import Text.Parsec (char, many, sepEndBy, spaces, try, (<?>), (<|>))
 import qualified Text.Parsec as Parsec
 
 
@@ -30,16 +30,18 @@ program = do
 
 -- parse a function
 function :: Parser () Function
-function = do
-  name <- ident
-  token "("
-  args <- ident `Parsec.sepEndBy` token "," -- allow a trailing comma in parameter lists
-  token ")"
-  -- TODO: allow single-statement functions to be defined without braces
-  token "{"
-  body <- many statement
-  token "}"
-  return Function { _name = name, _args = args, _body = body }
+function =
+  do
+    name <- ident
+    token "("
+    args <- ident `sepEndBy` token "," -- allow a trailing comma in parameter lists
+    token ")"
+    -- TODO: allow single-statement functions to be defined without braces
+    token "{"
+    body <- many statement
+    token "}"
+    return Function { _name = name, _args = args, _body = body }
+  <?> "function declaration"
 
 -- expect the string `s` followed by spaces
 token :: String -> Parser a ()
@@ -62,6 +64,13 @@ statement :: Parser a Statement
 statement =
   do
     name <- ident
-    mapM_ token ["(", ")", ";"]
-    return $ SCall name
+    token "("
+    args <- expr `sepEndBy` token "," -- allow a trailing comma in parameter lists
+    token ")"
+    token ";"
+    return $ SCall name args
   <?> "statement"
+
+-- parse an expression
+expr :: Parser a Expr
+expr = EVar <$> ident <?> "expression"

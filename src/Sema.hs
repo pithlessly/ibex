@@ -7,6 +7,8 @@ import qualified Ir
 import Data.Text (Text)
 import qualified Data.Text as Text
 
+import qualified Data.List as List
+
 import qualified Data.Map as Map
 
 import qualified Data.Vector as Vector
@@ -38,16 +40,26 @@ walkFns = go 0 Map.empty where
 
 walkFn :: Map.Map Text Int -> Ast.Function -> Walk Ir.Function
 walkFn bindings f = do
-  body' <- mapM (walkStatement bindings) $ Ast._body f
+  let walk = walkStatement bindings (Ast._args f)
+  body' <- mapM walk $ Ast._body f
   return Ir.Function {
     Ir._name    = Ast._name f,
     Ir._numArgs = length $ Ast._args f,
     Ir._body    = Vector.fromList body'
   }
 
-walkStatement :: Map.Map Text Int -> Ast.Statement -> Walk Ir.Statement
-walkStatement bindings = \case
-  Ast.SCall fname ->
+walkStatement :: Map.Map Text Int -> [Text] -> Ast.Statement -> Walk Ir.Statement
+walkStatement bindings argNames = \case
+  Ast.SCall fname args ->
     case Map.lookup fname bindings of
-      Just idx -> Right $ Ir.SCall idx
+      Just idx -> do
+        args' <- mapM (walkExpr argNames) args
+        return $ Ir.SCall idx (Vector.fromList args')
       Nothing -> Left $ "undefined symbol '" ++ Text.unpack fname ++ "'"
+
+walkExpr :: [Text] -> Ast.Expr -> Walk Ir.Expr
+walkExpr argNames = \case
+  Ast.EVar v ->
+    case List.findIndex (== v) argNames of
+      Just idx -> Right $ Ir.EVar idx
+      Nothing  -> Left $ "undefined variable '" ++ Text.unpack v ++ "'"

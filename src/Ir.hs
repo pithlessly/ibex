@@ -1,4 +1,4 @@
-module Ir (Program (..), Function (..), Statement (..)) where
+module Ir (Program (..), Function (..), Statement (..), Expr (..)) where
 
 
 import Data.Text (Text)
@@ -16,4 +16,6 @@ data Function = Function {
   _body :: Vector Statement
 } deriving (Show)
 
-data Statement = SCall Int deriving (Show)
+data Statement = SCall Int (Vector Expr) deriving (Show)
+
+data Expr = EVar Int deriving (Show)

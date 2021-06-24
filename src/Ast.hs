@@ -1,4 +1,4 @@
-module Ast (Program (..), Function (..), Statement (..)) where
+module Ast (Program (..), Function (..), Statement (..), Expr (..)) where
 
 
 import Data.Text (Text)
@@ -14,4 +14,6 @@ data Function = Function {
   _body :: [Statement]
 } deriving (Show)
 
-data Statement = SCall Text deriving (Show)
+data Statement = SCall Text [Expr] deriving (Show)
+
+data Expr = EVar Text deriving (Show)
