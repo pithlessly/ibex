@@ -90,9 +90,9 @@ emitPushExpr = \case
     RWS.modify (+ 8)
     let delta = (numArgs - 1 - idx) * 8 + stackDelta
     if delta == 0 then
-      emit "  push [rsp]\n"
+      emit "  push qword [rsp]\n"
     else
-      emits ["  push [rsp + ", Text.pack $ show delta, "]\n"]
+      emits ["  push qword [rsp + ", Text.pack $ show delta, "]\n"]
 
 -- If the name starts with a dot or an underscore, prepend an underscore to it.
 convertName :: Text -> Text
